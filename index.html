@@ -159,24 +159,28 @@
     const TOTAL_NUMBERS = 500;
     const PHONE_NUMBER = "5531997163796"; // WhatsApp TULO com DDD
     const PRICE_PER_NUM = 5.00;
-    const HOLD_HOURS = 24; // Tempo de reserva em horas
-    
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPnXAkxGALqQfQ9VEzjvjg7NrvolUKBF1wriPuzaygmZ7m3FvJ2hJhBQNL8b-ds1Rrdw/exec"; 
+    // Tempo de reserva em horas. Deve ser igual a HORAS_RESERVA no apps-script.gs
+    // e ao prazo informado nos textos da página ("1 hora").
+    const HOLD_HOURS = 1;
+
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPnXAkxGALqQfQ9VEzjvjg7NrvolUKBF1wriPuzaygmZ7m3FvJ2hJhBQNL8b-ds1Rrdw/exec";
 
     // 1. NÚMEROS CONFIRMADOS / PAGOS (Ficam vermelhos permanentemente)
-    const OCCUPIED_NUMBERS = [1,19,47,23,53,14,3,5,6,13,17,42,43,44,45,46,47,48,49,50,51,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,2]; 
+    const OCCUPIED_NUMBERS = [1,2,3,5,6,13,14,17,19,23,42,43,44,45,46,47,48,49,50,51,53,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75];
 
-    // 2. RESERVAS MANUAIS COM HORÁRIO (Ficam cinza por 3 horas)
+    // 2. RESERVAS MANUAIS COM HORÁRIO (Ficam cinza por HOLD_HOURS horas)
     // Formato: { num: NÚMERO, time: "AAAA-MM-DDTHH:MM:SS" }
     // Exemplo: { num: 5, time: "2026-10-09T10:00:00" }
     const RESERVED_NUMBERS = [
       // { num: 5, time: "2026-10-09T08:00:00" }
     ];
 
-    // 3. NÚMEROS CANCELADOS MANUALMENTE (Ignora a reserva de 3h e força ficar disponível)
+    // 3. NÚMEROS CANCELADOS MANUALMENTE (Ignora a reserva pendente e força ficar disponível)
+    // Para cancelar uma reserva feita pelo site, escreva "Cancelado" na coluna Status da planilha.
     const CANCELED_NUMBERS = []; // Coloque aqui os números que deseja liberar imediatamente
 
     let selectedNumbers = [];
+    let serverReservations = []; // Reservas pendentes de todos os visitantes, vindas da planilha
 
     const grid = document.getElementById('grid');
     const selectedList = document.getElementById('selected-list');
@@ -194,12 +198,40 @@
     }
 
     function saveLocalReservation(numbers) {
-      const current = getLocalReservations();
+      // Descarta reservas locais já expiradas para o armazenamento não crescer sem limite
+      const current = getLocalReservations().filter(r => isPendingActive(r.time));
       const now = new Date().toISOString();
       numbers.forEach(n => {
         current.push({ num: n, time: now });
       });
-      localStorage.setItem(LOCAL_RESERVATIONS_KEY, JSON.stringify(current));
+      try {
+        localStorage.setItem(LOCAL_RESERVATIONS_KEY, JSON.stringify(current));
+      } catch (e) {
+        // Sem localStorage (ex.: navegação privada): as reservas da planilha continuam valendo
+      }
+    }
+
+    // Busca na planilha as reservas pendentes feitas por qualquer visitante
+    function carregarReservas() {
+      return fetch(SCRIPT_URL)
+        .then(r => r.json())
+        .then(res => {
+          if (res.ok && Array.isArray(res.reservas)) {
+            serverReservations = res.reservas;
+          }
+        })
+        .catch(err => {
+          console.warn('Não foi possível carregar as reservas da planilha:', err);
+        })
+        .then(() => {
+          renderGrid();
+          updateFooter();
+        });
+    }
+
+    function resetBuyButton() {
+      buyBtn.textContent = 'Confirmar e Gerar Comprovante 🧾';
+      buyBtn.disabled = selectedNumbers.length === 0;
     }
 
     function isPendingActive(timeString) {
@@ -212,9 +244,10 @@
     function renderGrid() {
       grid.innerHTML = '';
 
-      // Carrega reservas locais do usuário + reservas manuais do código
+      // Junta reservas manuais do código + reservas da planilha + reservas locais deste navegador
       const localReservations = getLocalReservations();
-      const allReservations = [...RESERVED_NUMBERS, ...localReservations];
+      const allReservations = [...RESERVED_NUMBERS, ...serverReservations, ...localReservations];
+      const available = [];
 
       for (let i = 1; i <= TOTAL_NUMBERS; i++) {
         const btn = document.createElement('button');
@@ -230,20 +263,29 @@
         // 2. Se o número foi CANCELADO manualmente
         else if (CANCELED_NUMBERS.includes(i)) {
           btn.onclick = () => toggleNumber(i);
+          available.push(i);
         }
-        // 3. Se o número tem reserva pendente ativa (< 3 horas)
+        // 3. Se o número tem reserva pendente ativa (< HOLD_HOURS horas)
         else {
-          const reservation = allReservations.find(r => r.num === i);
-          if (reservation && isPendingActive(reservation.time)) {
+          const pending = allReservations.some(r => r.num === i && isPendingActive(r.time));
+          if (pending) {
             btn.classList.add('pending');
             btn.disabled = true;
             btn.title = 'Reservado (aguardando confirmação)';
           } else {
             btn.onclick = () => toggleNumber(i);
+            available.push(i);
           }
+        }
+
+        if (selectedNumbers.includes(i) && available.includes(i)) {
+          btn.classList.add('selected');
         }
         grid.appendChild(btn);
       }
+
+      // Remove da seleção os números que deixaram de estar disponíveis
+      selectedNumbers = selectedNumbers.filter(n => available.includes(n));
     }
 
     function toggleNumber(num) {
@@ -286,18 +328,29 @@
       const payload = {
         nome: nome,
         telefone: telefone,
-        numeros: numerosStr
+        numeros: selectedNumbers
       };
 
-      // Guarda localmente os números escolhidos como pendentes para travar na tela
-      saveLocalReservation(selectedNumbers);
-
+      // "text/plain" evita a checagem prévia de CORS, que o Apps Script não suporta,
+      // e ainda permite ler a resposta para saber se a reserva foi realmente gravada.
       fetch(SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload)
-      }).then(() => {
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (!res.ok) {
+          if (Array.isArray(res.conflitos) && res.conflitos.length > 0) {
+            alert(`O(s) número(s) ${res.conflitos.join(', ')} acabou(aram) de ser reservado(s) por outra pessoa e foi(ram) removido(s) da sua seleção. Confira os números e tente novamente.`);
+            return carregarReservas().then(resetBuyButton);
+          }
+          throw new Error(res.erro || 'Resposta inválida da planilha');
+        }
+
+        // Reserva confirmada pela planilha: trava os números também neste navegador
+        saveLocalReservation(selectedNumbers);
+
         document.getElementById('comp-nome').textContent = nome;
         document.getElementById('comp-telefone').textContent = telefone;
         document.getElementById('comp-numeros').textContent = numerosStr;
@@ -307,10 +360,11 @@
 
         // Abre o Modal com o Comprovante
         document.getElementById('modal-comprovante').style.display = 'flex';
-      }).catch(err => {
-        alert('Ocorreu um erro ao registrar sua reserva. Tente novamente.');
-        buyBtn.disabled = false;
-        buyBtn.textContent = 'Confirmar e Gerar Comprovante 🧾';
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Ocorreu um erro ao registrar sua reserva. Verifique sua conexão e tente novamente.');
+        resetBuyButton();
       });
     }
 
@@ -334,13 +388,12 @@
       document.getElementById('modal-comprovante').style.display = 'none';
 
       selectedNumbers = [];
-      renderGrid();
-      updateFooter();
 
       document.getElementById('nome').value = '';
       document.getElementById('telefone').value = '';
 
-      buyBtn.textContent = 'Confirmar e Gerar Comprovante 🧾';
+      resetBuyButton();
+      carregarReservas();
     }
 
     function abrirWhatsApp() {
@@ -351,7 +404,9 @@
       window.open(url, '_blank');
     }
 
+    // Mostra a grade na hora com os dados locais e atualiza com as reservas da planilha
     renderGrid();
+    carregarReservas();
   </script>
 </body>
 </html>
