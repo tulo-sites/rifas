@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rifa TULO</title>
+  <style>
+    :root {
+      --primary: #25d366;
+      --dark: #121212;
+      --card-bg: rgba(30, 30, 30, 0.95);
+      --text: #ffffff;
+      --text-muted: #a0a0a0;
+      --occupied: #dc3545;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+    body {
+      background-image: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)), url('TULO.webp');
+      background-size: cover; background-position: center; background-attachment: fixed;
+      color: var(--text); display: flex; justify-content: center; padding: 20px; min-height: 100vh;
+    }
+
+    .container { max-width: 800px; width: 100%; }
+
+    header { text-align: center; margin-bottom: 24px; background: var(--card-bg); padding: 20px; border-radius: 12px; }
+    h1 { font-size: 1.8rem; margin-bottom: 8px; color: var(--primary); }
+
+    .prize-img { width: 100%; max-width: 350px; height: auto; border-radius: 12px; margin: 15px auto; display: block; }
+    .info-box { margin-top: 12px; font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; }
+    .date-badge { display: inline-block; background: #333; color: #fff; padding: 6px 12px; border-radius: 20px; font-weight: bold; margin-top: 10px; }
+
+    .legend { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; font-size: 0.85rem; background: var(--card-bg); padding: 8px; border-radius: 8px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot.available { background: #2a2a2a; border: 1px solid #444; }
+    .dot.selected { background: var(--primary); }
+    .dot.occupied { background: var(--occupied); }
+
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(55px, 1fr)); gap: 8px;
+      max-height: 350px; overflow-y: auto; background: var(--card-bg); padding: 15px; border-radius: 12px; margin-bottom: 20px;
+    }
+
+    .number-btn {
+      aspect-ratio: 1; background: #2a2a2a; border: 1px solid #444; border-radius: 8px;
+      color: var(--text); font-weight: bold; cursor: pointer; transition: all 0.2s;
+    }
+    .number-btn.selected { background: var(--primary); color: #000; }
+    .number-btn:disabled { background: var(--occupied); opacity: 0.6; cursor: not-allowed; }
+
+    .form-box { background: var(--card-bg); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+    .form-group { margin-bottom: 12px; text-align: left; }
+    .form-group label { display: block; font-size: 0.85rem; margin-bottom: 4px; color: var(--text-muted); }
+    .form-group input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff; font-size: 1rem; }
+
+    .buy-btn {
+      width: 100%; background: var(--primary); color: #000; border: none; padding: 14px;
+      border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-top: 10px;
+    }
+    .buy-btn:disabled { background: #444; color: #888; cursor: not-allowed; }
+
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; padding: 20px; }
+    .modal-content { background: #1e1e1e; padding: 25px; border-radius: 12px; max-width: 450px; width: 100%; text-align: center; border: 2px solid var(--primary); }
+    .ticket { background: #2a2a2a; padding: 15px; border-radius: 8px; margin: 15px 0; border: 1px dashed var(--primary); text-align: left; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Rifa de Relógio Mandala Feito à Mão</h1>
+      <img src="relogio mandala.jpeg" alt="Foto do Prêmio" class="prize-img" />
+      <p class="info-box">
+        Esta rifa foi criada com o intuito de arrecadar recursos que serão destinados às <br><strong>obras e melhorias internas do nosso terreiro</strong>. 🙏✨<br><br>
+        Escolha os seus números abaixo (<strong>R$ 5,00 por número</strong>) e clique no botão para confirmar a disponibilidade do número escolhido e enviar o comprovante via WhatsApp!
+        <br><strong style="color: #ffc107;">⚠️ ATENÇÃO: Os números escolhidos só serão oficialmente reservados após o envio do comprovante de pagamento Pix pelo WhatsApp!</strong>
+      </p>
+      <div class="date-badge">📅 Sorteio: 13/11/2026</div>
+    </header>
+
+    <div class="legend">
+      <div class="legend-item"><div class="dot available"></div> Livre</div>
+      <div class="legend-item"><div class="dot selected"></div> Selecionado</div>
+      <div class="legend-item"><div class="dot occupied"></div> Ocupado</div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <div class="form-box">
+      <h3 style="margin-bottom: 15px; color: var(--primary);">📋 Seus Dados para o Comprovante</h3>
+      <div class="form-group">
+        <label>Nome Completo:</label>
+        <input type="text" id="nome" placeholder="Digite seu nome completo" required />
+      </div>
+      <div class="form-group">
+        <label>WhatsApp / Telefone com DDD (sem parênteses e sem traço):</label>
+        <input type="tel" id="telefone" placeholder="31999999999" required />
+      </div>
+      <div class="form-group">
+        <label>E-mail (para receber o comprovante):</label>
+        <input type="email" id="email" placeholder="seuemail@gmail.com" required />
+      </div>
+      
+      <p style="margin-top: 10px; font-size: 0.9rem;">Números Escolhidos: <strong id="selected-list" style="color: var(--primary);">Nenhum</strong></p>
+      
+      <button class="buy-btn" id="buy-btn" disabled onclick="processarReserva()">Confirmar e Gerar Comprovante 🧾</button>
+    </div>
+  </div>
+
+  <div class="modal" id="modal-comprovante">
+    <div class="modal-content" style="position: relative;">
+      
+      <button onclick="fecharModal()" title="Fechar" style="position: absolute; top: 12px; right: 15px; background: transparent; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; font-weight: bold;">✕</button>
+  
+      <h2 style="color: var(--primary);">🎉 Reserva Registrada!</h2>
+      <p style="font-size: 0.9rem; margin-top: 5px;">Tire um print desta tela como seu comprovante de participação.</p>
+      
+      <div class="ticket">
+        <p><strong>Participante:</strong> <span id="comp-nome"></span></p>
+        <p><strong>Telefone:</strong> <span id="comp-telefone"></span></p>
+        <p><strong>E-mail:</strong> <span id="comp-email"></span></p>
+        <p><strong>Número(s) da Senha:</strong> <span id="comp-numeros" style="color: var(--primary); font-weight: bold; font-size: 1.1rem;"></span></p>
+        <p><strong>Total a Pagar:</strong> <span id="comp-total" style="font-weight: bold;"></span></p>
+        <p><strong>Data da Reserva:</strong> <span id="comp-data"></span></p>
+      </div>
+  
+      <div style="background: rgba(255, 193, 7, 0.15); border: 1px solid #ffc107; padding: 12px; border-radius: 8px; margin: 15px 0; text-align: center;">
+        <p style="font-size: 0.9rem; color: #ffc107; font-weight: bold; margin: 0;">
+          ⚠️ Os números só serão oficialmente reservados após o envio do comprovante Pix no WhatsApp!
+        </p>
+      </div>
+
+      <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 10px;">
+        Para efetivar a reserva de seu(s) número(s), realize o Pix de <strong id="pix-valor"></strong> para a Chave Pix abaixo e envie o comprovante:
+      </p>
+  
+      <div style="margin: 15px 0; text-align: center;">
+        <small style="color: var(--text-muted); display: block; margin-bottom: 5px;">Chave Pix (Copiar e Cola):</small>
+        <div style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #000; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--primary);">
+          <span id="chave-pix-texto" style="font-weight: bold; color: var(--primary); font-family: monospace; font-size: 1rem;">45.824.013/0001-13</span>
+          <button onclick="copiarChavePix()" title="Copiar Chave Pix" style="background: transparent; border: none; color: var(--primary); cursor: pointer; display: flex; align-items: center; padding: 2px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+        </div>
+        <small id="mensagem-copiado" style="display: block; color: var(--primary); font-size: 0.8rem; margin-top: 5px; height: 16px; opacity: 0; transition: opacity 0.3s;"></small>
+      </div>
+  
+      <button class="buy-btn" onclick="abrirWhatsApp()" style="margin-bottom: 10px;">Enviar Comprovante no WhatsApp 📲</button>
+      
+      <button onclick="fecharModal()" style="width: 100%; background: transparent; border: 1px solid #555; color: #ccc; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold;">Fechar Janela</button>
+    </div>
+  </div>
+  <script>
+    const TOTAL_NUMBERS = 500;
+    const PHONE_NUMBER = "5531997163796"; // WhatsApp TULO com DDD
+    const PRICE_PER_NUM = 5.00;
+    
+    // URL GOOGLE APPS SCRIPT
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPnXAkxGALqQfQ9VEzjvjg7NrvolUKBF1wriPuzaygmZ7m3FvJ2hJhBQNL8b-ds1Rrdw/exec"; 
+
+    const OCCUPIED_NUMBERS = []; // Números já vendidos
+    let selectedNumbers = [];
+
+    const grid = document.getElementById('grid');
+    const selectedList = document.getElementById('selected-list');
+    const buyBtn = document.getElementById('buy-btn');
+
+    function renderGrid() {
+      grid.innerHTML = '';
+      for (let i = 1; i <= TOTAL_NUMBERS; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'number-btn';
+        btn.textContent = i;
+        btn.id = `num-${i}`;
+
+        if (OCCUPIED_NUMBERS.includes(i)) {
+          btn.disabled = true;
+        } else {
+          btn.onclick = () => toggleNumber(i);
+        }
+        grid.appendChild(btn);
+      }
+    }
+
+    function toggleNumber(num) {
+      const btn = document.getElementById(`num-${num}`);
+      if (selectedNumbers.includes(num)) {
+        selectedNumbers = selectedNumbers.filter(n => n !== num);
+        btn.classList.remove('selected');
+      } else {
+        selectedNumbers.push(num);
+        btn.classList.add('selected');
+      }
+      updateFooter();
+    }
+
+    function updateFooter() {
+      if (selectedNumbers.length === 0) {
+        selectedList.textContent = 'Nenhum';
+        buyBtn.disabled = true;
+      } else {
+        selectedNumbers.sort((a, b) => a - b);
+        selectedList.textContent = selectedNumbers.join(', ');
+        buyBtn.disabled = false;
+      }
+    }
+
+    function processarReserva() {
+      const nome = document.getElementById('nome').value.trim();
+      const telefone = document.getElementById('telefone').value.trim();
+      const email = document.getElementById('email').value.trim();
+
+      if (!nome || !telefone || !email) {
+        alert('Por favor, preencha todos os campos do formulário para podermos gerar seu comprovante.');
+        return;
+      }
+
+      buyBtn.disabled = true;
+      buyBtn.textContent = 'Gravando reserva...';
+
+      const total = (selectedNumbers.length * PRICE_PER_NUM).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      const numerosStr = selectedNumbers.join(', ');
+
+      const payload = {
+        nome: nome,
+        telefone: telefone,
+        email: email,
+        numeros: numerosStr
+      };
+
+      // Salva na Planilha do Google
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(() => {
+        // Preenche o Comprovante na tela
+        document.getElementById('comp-nome').textContent = nome;
+        document.getElementById('comp-telefone').textContent = telefone;
+        document.getElementById('comp-email').textContent = email;
+        document.getElementById('comp-numeros').textContent = numerosStr;
+        document.getElementById('comp-total').textContent = total;
+        document.getElementById('pix-valor').textContent = total;
+        document.getElementById('comp-data').textContent = new Date().toLocaleString('pt-BR');
+
+        // Abre o Modal com o Comprovante
+        document.getElementById('modal-comprovante').style.display = 'flex';
+      }).catch(err => {
+        alert('Ocorreu um erro ao registrar sua reserva. Tente novamente.');
+        buyBtn.disabled = false;
+        buyBtn.textContent = 'Confirmar e Gerar Comprovante 🧾';
+      });
+    }
+
+    function copiarChavePix() {
+      const chavePix = document.getElementById('chave-pix-texto').innerText;
+      
+      navigator.clipboard.writeText(chavePix).then(() => {
+        const msg = document.getElementById('mensagem-copiado');
+        msg.textContent = '✓ Chave Pix copiada!';
+        msg.style.opacity = '1';
+    
+        setTimeout(() => {
+          msg.style.opacity = '0';
+        }, 2500);
+      }).catch(err => {
+        alert('Erro ao copiar a chave. Por favor, copie manualmente: ' + chavePix);
+      });
+    }
+
+    function fecharModal() {
+      document.getElementById('modal-comprovante').style.display = 'none';
+
+      selectedNumbers = [];
+      renderGrid();
+      updateFooter();
+
+      document.getElementById('nome').value = '';
+      document.getElementById('telefone').value = '';
+      document.getElementById('email').value = '';
+
+      buyBtn.textContent = 'Confirmar e Gerar Comprovante 🧾';
+    }
+
+    function abrirWhatsApp() {
+      const nome = document.getElementById('nome').value;
+      const numeros = selectedNumbers.join(', ');
+      const text = `Olá! Fiz a reserva da senha para a rifa do terreiro no site.\n\n*Nome:* ${nome}\n*Número(s):* ${numeros}\n\nSegue o meu comprovante do Pix para validação!`;
+      const url = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(text)}`;
+      window.open(url, '_blank');
+    }
+
+    renderGrid();
+  </script>
+</body>
+</html>
