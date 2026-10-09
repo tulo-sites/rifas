@@ -79,7 +79,7 @@
       <p class="info-box">
         Esta rifa foi criada com o intuito de arrecadar recursos que serão destinados às <br><strong>obras e melhorias internas do nosso terreiro</strong>. 🙏✨<br><br>
         Escolha os seus números abaixo (<strong>R$ 5,00 por número</strong>) e clique no botão para registrar a sua reserva!<br>
-        <strong style="color: #ffc107;">⚠️ ATENÇÃO: As reservas ficam mantidas por até 3 horas aguardando o envio do comprovante Pix. Caso o pagamento não seja confirmado nesse prazo, o número voltará a ficar disponível.</strong>
+        <strong style="color: #ffc107;"><br>⚠️ ATENÇÃO<br>As reservas ficam mantidas por 1 hora aguardando o envio do comprovante Pix. Caso o pagamento não seja confirmado nesse prazo, o número voltará a ficar disponível.</strong>
       </p>
       <div class="date-badge">📅 Sorteio: 13/11/2026</div>
     </header>
@@ -121,15 +121,15 @@
       <div class="ticket">
         <p><strong>Participante:</strong> <span id="comp-nome"></span></p>
         <p><strong>Telefone:</strong> <span id="comp-telefone"></span></p>
-        <p><strong>Número(s) da Senha:</strong> <span id="comp-numeros" style="color: var(--primary); font-weight: bold; font-size: 1.1rem;"></span></p>
+        <p><strong>Número(s):</strong> <span id="comp-numeros" style="color: var(--primary); font-weight: bold; font-size: 1.1rem;"></span></p>
         <p><strong>Total a Pagar:</strong> <span id="comp-total" style="font-weight: bold;"></span></p>
         <p><strong>Data/Hora do Pedido:</strong> <span id="comp-data"></span></p>
       </div>
   
       <div style="background: rgba(255, 193, 7, 0.15); border: 1px solid #ffc107; padding: 12px; border-radius: 8px; margin: 15px 0; text-align: center;">
         <p style="font-size: 0.88rem; color: #ffc107; font-weight: bold; margin: 0; line-height: 1.4;">
-          ⚠️ Sua reserva está pendente e será mantida por 1 HORA.<br>
-          Realize o Pix e envie o comprovante no WhatsApp para efetivar a compra e receber o recibo de aquisição do(s) número(s) solicitado(s). Se o pagamento não for enviado dentro deste prazo, os números voltarão a ficar disponíveis.
+          ⚠️ Sua reserva está pendente e será mantida por <br>1 HORA.<br>
+          <br>Se o pagamento e envio do comprovante não forem enviados dentro deste prazo, os números voltarão a ficar disponíveis.
         </p>
       </div>
 
@@ -166,7 +166,7 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPnXAkxGALqQfQ9VEzjvjg7NrvolUKBF1wriPuzaygmZ7m3FvJ2hJhBQNL8b-ds1Rrdw/exec"; 
 
     // 1. NÚMEROS CONFIRMADOS / PAGOS (Ficam vermelhos permanentemente)
-    const OCCUPIED_NUMBERS = [10, 25, 50]; 
+    const OCCUPIED_NUMBERS = []; 
 
     // 2. RESERVAS MANUAIS COM HORÁRIO (Ficam cinza por 3 horas)
     // Formato: { num: NÚMERO, time: "AAAA-MM-DDTHH:MM:SS" }
