@@ -7,7 +7,12 @@
  * Status:
  *   "Pendente Pix" (ou vazio) -> bloqueia os números por HORAS_RESERVA horas (cinza no site)
  *   "Pago"                    -> bloqueia os números permanentemente (vermelho no site)
+ *   "Expirado"                -> reserva vencida, marcada por marcarExpiradas(); libera os números
  *   "Cancelado" (ou outro)    -> libera os números
+ *
+ * Expiração automática: rode configurarGatilho() uma vez no editor do Apps Script.
+ * A partir daí, marcarExpiradas() roda a cada hora e muda para "Expirado" o status das
+ * reservas pendentes vencidas. Nenhuma linha é apagada.
  *
  * Números repetidos (em várias linhas, ou também em OCCUPIED_NUMBERS no index.html)
  * contam uma vez só. Se um número está pago em uma linha, ele não aparece como pendente.
@@ -20,6 +25,7 @@
 const HORAS_RESERVA = 24; // Deve ser igual a HOLD_HOURS no index.html
 const STATUS_PENDENTE = 'Pendente Pix';
 const STATUS_PAGO = 'Pago';
+const STATUS_EXPIRADO = 'Expirado';
 
 // GET: lista os números pagos e as reservas pendentes ativas para o site travar os números
 function doGet() {
@@ -82,7 +88,7 @@ function lerPlanilha_() {
       return;
     }
 
-    if (st !== '' && st !== STATUS_PENDENTE.toLowerCase()) return; // Cancelado ou outra anotação
+    if (!ehPendente_(status)) return; // Expirado, Cancelado ou outra anotação
 
     const data = lerData_(valorData);
     if (!data || data.getTime() < limite) return;
@@ -99,6 +105,53 @@ function lerPlanilha_() {
   });
 
   return { pagos: [...pagos], reservas: reservas };
+}
+
+// Muda para "Expirado" o status das reservas pendentes que passaram de HORAS_RESERVA horas.
+// Chamada pelo gatilho criado em configurarGatilho(); também pode ser executada à mão.
+function marcarExpiradas() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000); // Não roda junto com um doPost gravando uma reserva
+  try {
+    const aba = aba_();
+    if (aba.getLastRow() < 1) return 0;
+
+    const linhas = aba.getRange(1, 1, aba.getLastRow(), 5).getValues();
+    const limite = Date.now() - HORAS_RESERVA * 60 * 60 * 1000;
+    let total = 0;
+
+    linhas.forEach(([valorData, , , , status], i) => {
+      if (!ehPendente_(status)) return;
+      const data = lerData_(valorData);
+      if (!data || data.getTime() >= limite) return; // Sem data válida (ex.: cabeçalho) ou ainda no prazo
+
+      // Altera só a célula de status, para não sobrescrever edições feitas à mão em outras linhas
+      aba.getRange(i + 1, 5).setValue(STATUS_EXPIRADO);
+      total++;
+    });
+
+    console.log(`${total} reserva(s) marcada(s) como ${STATUS_EXPIRADO}.`);
+    return total;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Execute UMA VEZ no editor do Apps Script para agendar marcarExpiradas() a cada hora.
+// Pode ser executada de novo sem criar gatilhos duplicados.
+function configurarGatilho() {
+  ScriptApp.getProjectTriggers()
+    .filter(t => t.getHandlerFunction() === 'marcarExpiradas')
+    .forEach(t => ScriptApp.deleteTrigger(t));
+
+  ScriptApp.newTrigger('marcarExpiradas').timeBased().everyHours(1).create();
+  marcarExpiradas(); // Já marca as reservas vencidas que existem hoje
+}
+
+// Status vazio também conta como pendente (linhas antigas ou digitadas à mão)
+function ehPendente_(status) {
+  const st = String(status).trim().toLowerCase();
+  return st === '' || st === STATUS_PENDENTE.toLowerCase();
 }
 
 // Converte "1, 2, 2, 5" (ou um número solto) em [1, 2, 5]

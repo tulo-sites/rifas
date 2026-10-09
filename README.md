@@ -70,7 +70,10 @@ Como cada status é tratado:
 |---|---|
 | `Pendente Pix` ou vazio | Cinza por `HORAS_RESERVA` horas a partir da Data/Hora |
 | `Pago` | Vermelho permanentemente |
+| `Expirado` | Número livre (reserva vencida, marcada automaticamente) |
 | `Cancelado` ou qualquer outro texto | Número livre |
+
+**Expiração automática:** a função `marcarExpiradas()` roda a cada hora e muda para `Expirado` o status das reservas pendentes que passaram do prazo. Nenhuma linha é apagada. Ela só deixa claro na planilha quais reservas venceram, porque o site já ignora as vencidas de qualquer forma.
 
 Os números da coluna D são separados por vírgula, com ou sem espaço (`7, 8` ou `7,8`). A coluna é gravada como texto para o Sheets não transformar `1,2` em número decimal.
 
@@ -122,3 +125,11 @@ A chave Pix e os textos (título, data do sorteio, avisos) ficam no próprio HTM
    - Se usar **Nova implantação**, a URL muda e é preciso atualizar a `SCRIPT_URL` no [index.html](index.html).
 3. Para testar, abra a `SCRIPT_URL` no navegador. Deve aparecer `{"ok":true,"reservas":[...],"pagos":[...]}`.
 4. Só depois publique o [index.html](index.html), se ele também mudou.
+
+### Ativando a expiração automática (uma vez só)
+
+1. No editor do Apps Script, escolha a função **`configurarGatilho`** na lista ao lado do botão **Executar** e clique em **Executar**.
+2. Autorize o acesso quando o Google pedir.
+3. O gatilho aparece em **Acionadores** (ícone de relógio, no menu lateral). Rodar `configurarGatilho` de novo não cria gatilhos duplicados.
+
+O gatilho não depende da implantação: ele continua funcionando quando uma nova versão é publicada.
