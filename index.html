@@ -12,6 +12,7 @@
       --text: #ffffff;
       --text-muted: #a0a0a0;
       --occupied: #dc3545;
+      --pending: #888888; /* Cinza claro para pendentes/reservados */
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -31,11 +32,12 @@
     .info-box { margin-top: 12px; font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; }
     .date-badge { display: inline-block; background: #333; color: #fff; padding: 6px 12px; border-radius: 20px; font-weight: bold; margin-top: 10px; }
 
-    .legend { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; font-size: 0.85rem; background: var(--card-bg); padding: 8px; border-radius: 8px; }
+    .legend { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; font-size: 0.85rem; background: var(--card-bg); padding: 8px; border-radius: 8px; flex-wrap: wrap; }
     .legend-item { display: flex; align-items: center; gap: 6px; }
     .dot { width: 12px; height: 12px; border-radius: 50%; }
     .dot.available { background: #2a2a2a; border: 1px solid #444; }
     .dot.selected { background: var(--primary); }
+    .dot.pending { background: var(--pending); }
     .dot.occupied { background: var(--occupied); }
 
     .grid {
@@ -48,7 +50,9 @@
       color: var(--text); font-weight: bold; cursor: pointer; transition: all 0.2s;
     }
     .number-btn.selected { background: var(--primary); color: #000; }
-    .number-btn:disabled { background: var(--occupied); opacity: 0.6; cursor: not-allowed; }
+    .number-btn.pending { background: var(--pending); color: #e0e0e0; cursor: not-allowed; border-color: #666; }
+    .number-btn:disabled { opacity: 0.75; cursor: not-allowed; }
+    .number-btn.occupied:disabled { background: var(--occupied); opacity: 0.6; }
 
     .form-box { background: var(--card-bg); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
     .form-group { margin-bottom: 12px; text-align: left; }
@@ -74,8 +78,8 @@
       <img src="relogio mandala.jpeg" alt="Foto do Prêmio" class="prize-img" />
       <p class="info-box">
         Esta rifa foi criada com o intuito de arrecadar recursos que serão destinados às <br><strong>obras e melhorias internas do nosso terreiro</strong>. 🙏✨<br><br>
-        Escolha os seus números abaixo (<strong>R$ 5,00 por número</strong>) e clique no botão para confirmar a disponibilidade do número escolhido e enviar o comprovante via WhatsApp!
-        <br><strong style="color: #ffc107;">⚠️ ATENÇÃO: Os números escolhidos só serão oficialmente reservados após o envio do comprovante de pagamento Pix pelo WhatsApp!</strong>
+        Escolha os seus números abaixo (<strong>R$ 5,00 por número</strong>) e clique no botão para registrar a sua reserva!<br>
+        <strong style="color: #ffc107;">⚠️ ATENÇÃO: As reservas ficam mantidas por até 3 horas aguardando o envio do comprovante Pix. Caso o pagamento não seja confirmado nesse prazo, o número voltará a ficar disponível.</strong>
       </p>
       <div class="date-badge">📅 Sorteio: 13/11/2026</div>
     </header>
@@ -83,7 +87,8 @@
     <div class="legend">
       <div class="legend-item"><div class="dot available"></div> Livre</div>
       <div class="legend-item"><div class="dot selected"></div> Selecionado</div>
-      <div class="legend-item"><div class="dot occupied"></div> Ocupado</div>
+      <div class="legend-item"><div class="dot pending"></div> Reservado (Pendente)</div>
+      <div class="legend-item"><div class="dot occupied"></div> Pago (Ocupado)</div>
     </div>
 
     <div class="grid" id="grid"></div>
@@ -110,20 +115,21 @@
       
       <button onclick="fecharModal()" title="Fechar" style="position: absolute; top: 12px; right: 15px; background: transparent; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; font-weight: bold;">✕</button>
   
-      <h2 style="color: var(--primary);">🎉 Reserva Registrada!</h2>
-      <p style="font-size: 0.9rem; margin-top: 5px;">Tire um print desta tela como seu comprovante de participação.</p>
+      <h2 style="color: var(--primary);">⏳ Reserva Pendente Registrada!</h2>
+      <p style="font-size: 0.9rem; margin-top: 5px;">Tire um print desta tela como seu comprovante de reserva temporária.</p>
       
       <div class="ticket">
         <p><strong>Participante:</strong> <span id="comp-nome"></span></p>
         <p><strong>Telefone:</strong> <span id="comp-telefone"></span></p>
         <p><strong>Número(s) da Senha:</strong> <span id="comp-numeros" style="color: var(--primary); font-weight: bold; font-size: 1.1rem;"></span></p>
         <p><strong>Total a Pagar:</strong> <span id="comp-total" style="font-weight: bold;"></span></p>
-        <p><strong>Data da Reserva:</strong> <span id="comp-data"></span></p>
+        <p><strong>Data/Hora do Pedido:</strong> <span id="comp-data"></span></p>
       </div>
   
       <div style="background: rgba(255, 193, 7, 0.15); border: 1px solid #ffc107; padding: 12px; border-radius: 8px; margin: 15px 0; text-align: center;">
-        <p style="font-size: 0.9rem; color: #ffc107; font-weight: bold; margin: 0;">
-          ⚠️ Os números só serão oficialmente reservados após o envio do comprovante Pix no WhatsApp!
+        <p style="font-size: 0.88rem; color: #ffc107; font-weight: bold; margin: 0; line-height: 1.4;">
+          ⚠️ Sua reserva está pendente e será mantida por 1 HORA.<br>
+          Realize o Pix e envie o comprovante no WhatsApp para efetivar a compra e receber o recibo de aquisição do(s) número(s) solicitado(s). Se o pagamento não for enviado dentro deste prazo, os números voltarão a ficar disponíveis.
         </p>
       </div>
 
@@ -150,23 +156,65 @@
       <button onclick="fecharModal()" style="width: 100%; background: transparent; border: 1px solid #555; color: #ccc; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold;">Fechar Janela</button>
     </div>
   </div>
+
   <script>
     const TOTAL_NUMBERS = 500;
     const PHONE_NUMBER = "5531997163796"; // WhatsApp TULO com DDD
     const PRICE_PER_NUM = 5.00;
+    const HOLD_HOURS = 3; // Tempo de reserva em horas
     
-    // URL GOOGLE APPS SCRIPT
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPnXAkxGALqQfQ9VEzjvjg7NrvolUKBF1wriPuzaygmZ7m3FvJ2hJhBQNL8b-ds1Rrdw/exec"; 
 
-    const OCCUPIED_NUMBERS = []; // Números já vendidos
+    // 1. NÚMEROS CONFIRMADOS / PAGOS (Ficam vermelhos permanentemente)
+    const OCCUPIED_NUMBERS = [10, 25, 50]; 
+
+    // 2. RESERVAS MANUAIS COM HORÁRIO (Ficam cinza por 3 horas)
+    // Formato: { num: NÚMERO, time: "AAAA-MM-DDTHH:MM:SS" }
+    // Exemplo: { num: 5, time: "2026-10-09T10:00:00" }
+    const RESERVED_NUMBERS = [
+      // { num: 5, time: "2026-10-09T08:00:00" }
+    ];
+
     let selectedNumbers = [];
 
     const grid = document.getElementById('grid');
     const selectedList = document.getElementById('selected-list');
     const buyBtn = document.getElementById('buy-btn');
 
+    const LOCAL_RESERVATIONS_KEY = 'tulo_local_reservations';
+
+    function getLocalReservations() {
+      try {
+        const stored = localStorage.getItem(LOCAL_RESERVATIONS_KEY);
+        return stored ? JSON.parse(stored) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveLocalReservation(numbers) {
+      const current = getLocalReservations();
+      const now = new Date().toISOString();
+      numbers.forEach(n => {
+        current.push({ num: n, time: now });
+      });
+      localStorage.setItem(LOCAL_RESERVATIONS_KEY, JSON.stringify(current));
+    }
+
+    function isPendingActive(timeString) {
+      const reservedTime = new Date(timeString).getTime();
+      const currentTime = new Date().getTime();
+      const diffInHours = (currentTime - reservedTime) / (1000 * 60 * 60);
+      return diffInHours < HOLD_HOURS;
+    }
+
     function renderGrid() {
       grid.innerHTML = '';
+      const now = new Date();
+
+      const localReservations = getLocalReservations();
+      const allReservations = [...RESERVED_NUMBERS, ...localReservations];
+
       for (let i = 1; i <= TOTAL_NUMBERS; i++) {
         const btn = document.createElement('button');
         btn.className = 'number-btn';
@@ -174,9 +222,17 @@
         btn.id = `num-${i}`;
 
         if (OCCUPIED_NUMBERS.includes(i)) {
+          btn.classList.add('occupied');
           btn.disabled = true;
         } else {
-          btn.onclick = () => toggleNumber(i);
+          const reservation = allReservations.find(r => r.num === i);
+          if (reservation && isPendingActive(reservation.time)) {
+            btn.classList.add('pending');
+            btn.disabled = true;
+            btn.title = 'Reservado (aguardando confirmação)';
+          } else {
+            btn.onclick = () => toggleNumber(i);
+          }
         }
         grid.appendChild(btn);
       }
@@ -225,14 +281,15 @@
         numeros: numerosStr
       };
 
-      // Salva na Planilha do Google
+      // Guarda localmente os números escolhidos como pendentes para travar na tela
+      saveLocalReservation(selectedNumbers);
+
       fetch(SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       }).then(() => {
-        // Preenche o Comprovante na tela
         document.getElementById('comp-nome').textContent = nome;
         document.getElementById('comp-telefone').textContent = telefone;
         document.getElementById('comp-numeros').textContent = numerosStr;
@@ -281,7 +338,7 @@
     function abrirWhatsApp() {
       const nome = document.getElementById('nome').value;
       const numeros = selectedNumbers.join(', ');
-      const text = `Olá! Fiz a reserva da senha para a rifa do terreiro no site.\n\n*Nome:* ${nome}\n*Número(s):* ${numeros}\n\nSegue o meu comprovante do Pix para validação!`;
+      const text = `Olá! Fiz a solicitação de reserva da senha para a rifa do terreiro no site.\n\n*Nome:* ${nome}\n*Número(s):* ${numeros}\n\n*Segue em anexo meu comprovante Pix para confirmação da reserva!*`;
       const url = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(text)}`;
       window.open(url, '_blank');
     }
