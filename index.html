@@ -159,7 +159,7 @@
     const TOTAL_NUMBERS = 500;
     const PHONE_NUMBER = "5531997163796"; // WhatsApp TULO com DDD
     const PRICE_PER_NUM = 5.00;
-    const HOLD_HOURS = 3; // Tempo de reserva em horas
+    const HOLD_HOURS = 24; // Tempo de reserva em horas
     
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPnXAkxGALqQfQ9VEzjvjg7NrvolUKBF1wriPuzaygmZ7m3FvJ2hJhBQNL8b-ds1Rrdw/exec"; 
 
@@ -174,7 +174,7 @@
     ];
 
     // 3. NÚMEROS CANCELADOS MANUALMENTE (Ignora a reserva de 3h e força ficar disponível)
-    const CANCELED_NUMBERS = [5]; // Coloque aqui os números que deseja liberar imediatamente
+    const CANCELED_NUMBERS = [5,7,9,11,13]; // Coloque aqui os números que deseja liberar imediatamente
 
     let selectedNumbers = [];
 
