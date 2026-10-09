@@ -179,8 +179,12 @@
     // Para cancelar uma reserva feita pelo site, escreva "Cancelado" na coluna Status da planilha.
     const CANCELED_NUMBERS = []; // Coloque aqui os números que deseja liberar imediatamente
 
+    const REFRESH_SECONDS = 60; // Intervalo da atualização automática da grade
+
     let selectedNumbers = [];
     let serverReservations = []; // Reservas pendentes de todos os visitantes, vindas da planilha
+    let serverPaid = [];         // Números com status "Pago" na planilha
+    let enviando = false;        // Evita atualizar a grade no meio do envio de uma reserva
 
     const grid = document.getElementById('grid');
     const selectedList = document.getElementById('selected-list');
@@ -211,7 +215,7 @@
       }
     }
 
-    // Busca na planilha as reservas pendentes feitas por qualquer visitante
+    // Busca na planilha as reservas pendentes e os números pagos
     function carregarReservas() {
       return fetch(SCRIPT_URL)
         .then(r => r.json())
@@ -219,11 +223,15 @@
           if (res.ok && Array.isArray(res.reservas)) {
             serverReservations = res.reservas;
           }
+          if (res.ok && Array.isArray(res.pagos)) {
+            serverPaid = res.pagos;
+          }
         })
         .catch(err => {
           console.warn('Não foi possível carregar as reservas da planilha:', err);
         })
         .then(() => {
+          if (enviando) return; // Os dados ficam guardados e aparecem na próxima atualização
           renderGrid();
           updateFooter();
         });
@@ -247,6 +255,8 @@
       // Junta reservas manuais do código + reservas da planilha + reservas locais deste navegador
       const localReservations = getLocalReservations();
       const allReservations = [...RESERVED_NUMBERS, ...serverReservations, ...localReservations];
+      // Set ignora números repetidos entre o código e a planilha
+      const occupied = new Set([...OCCUPIED_NUMBERS, ...serverPaid]);
       const available = [];
 
       for (let i = 1; i <= TOTAL_NUMBERS; i++) {
@@ -256,7 +266,7 @@
         btn.id = `num-${i}`;
 
         // 1. Se o número está PAGO (Vermelho)
-        if (OCCUPIED_NUMBERS.includes(i)) {
+        if (occupied.has(i)) {
           btn.classList.add('occupied');
           btn.disabled = true;
         } 
@@ -319,6 +329,9 @@
         return;
       }
 
+      // Fica true até o comprovante ser fechado, para a atualização automática
+      // não mexer na seleção enquanto ela ainda é usada no comprovante e no WhatsApp
+      enviando = true;
       buyBtn.disabled = true;
       buyBtn.textContent = 'Gravando reserva...';
 
@@ -342,7 +355,8 @@
       .then(res => {
         if (!res.ok) {
           if (Array.isArray(res.conflitos) && res.conflitos.length > 0) {
-            alert(`O(s) número(s) ${res.conflitos.join(', ')} acabou(aram) de ser reservado(s) por outra pessoa e foi(ram) removido(s) da sua seleção. Confira os números e tente novamente.`);
+            alert(`O(s) número(s) ${res.conflitos.join(', ')} acabou(aram) de ser reservado(s) ou pago(s) por outra pessoa e foi(ram) removido(s) da sua seleção. Confira os números e tente novamente.`);
+            enviando = false;
             return carregarReservas().then(resetBuyButton);
           }
           throw new Error(res.erro || 'Resposta inválida da planilha');
@@ -364,6 +378,7 @@
       .catch(err => {
         console.error(err);
         alert('Ocorreu um erro ao registrar sua reserva. Verifique sua conexão e tente novamente.');
+        enviando = false;
         resetBuyButton();
       });
     }
@@ -388,6 +403,7 @@
       document.getElementById('modal-comprovante').style.display = 'none';
 
       selectedNumbers = [];
+      enviando = false;
 
       document.getElementById('nome').value = '';
       document.getElementById('telefone').value = '';
@@ -407,6 +423,11 @@
     // Mostra a grade na hora com os dados locais e atualiza com as reservas da planilha
     renderGrid();
     carregarReservas();
+
+    // Atualização automática: só roda com a aba visível e sem reserva em andamento
+    setInterval(() => {
+      if (!enviando && !document.hidden) carregarReservas();
+    }, REFRESH_SECONDS * 1000);
   </script>
 </body>
 </html>
