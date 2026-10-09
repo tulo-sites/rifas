@@ -17,7 +17,7 @@
  * Executar como: "Eu"; Quem pode acessar: "Qualquer pessoa".
  */
 
-const HORAS_RESERVA = 1; // Deve ser igual a HOLD_HOURS no index.html
+const HORAS_RESERVA = 24; // Deve ser igual a HOLD_HOURS no index.html
 const STATUS_PENDENTE = 'Pendente Pix';
 const STATUS_PAGO = 'Pago';
 
