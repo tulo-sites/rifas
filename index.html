@@ -12,7 +12,7 @@
       --text: #ffffff;
       --text-muted: #a0a0a0;
       --occupied: #dc3545;
-      --pending: #888888; /* Cinza claro para pendentes/reservados */
+      --pending: #888888; 
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -346,7 +346,7 @@
     function abrirWhatsApp() {
       const nome = document.getElementById('nome').value;
       const numeros = selectedNumbers.join(', ');
-      const text = `Olá! Fiz a solicitação de reserva da senha para a rifa do terreiro no site.\n\n*Nome:* ${nome}\n*Número(s):* ${numeros}\n\n*Segue em anexo meu comprovante Pix para confirmação da reserva!*`;
+      const text = `Olá! Fiz a solicitação de reserva do número para a rifa do relógio mandala através do site.\n\n*Nome:* ${nome}\n*Número(s):* ${numeros}\n\n*Segue em anexo meu comprovante Pix para confirmação da reserva:*`;
       const url = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(text)}`;
       window.open(url, '_blank');
     }
