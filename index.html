@@ -175,6 +175,9 @@
       // { num: 5, time: "2026-10-09T08:00:00" }
     ];
 
+    // 3. NÚMEROS CANCELADOS MANUALMENTE (Ignora a reserva de 3h e força ficar disponível)
+    const CANCELED_NUMBERS = [5]; // Coloque aqui os números que deseja liberar imediatamente
+
     let selectedNumbers = [];
 
     const grid = document.getElementById('grid');
@@ -210,8 +213,8 @@
 
     function renderGrid() {
       grid.innerHTML = '';
-      const now = new Date();
 
+      // Carrega reservas locais do usuário + reservas manuais do código
       const localReservations = getLocalReservations();
       const allReservations = [...RESERVED_NUMBERS, ...localReservations];
 
@@ -221,10 +224,17 @@
         btn.textContent = i;
         btn.id = `num-${i}`;
 
+        // 1. Se o número está PAGO (Vermelho)
         if (OCCUPIED_NUMBERS.includes(i)) {
           btn.classList.add('occupied');
           btn.disabled = true;
-        } else {
+        } 
+        // 2. Se o número foi CANCELADO manualmente
+        else if (CANCELED_NUMBERS.includes(i)) {
+          btn.onclick = () => toggleNumber(i);
+        }
+        // 3. Se o número tem reserva pendente ativa (< 3 horas)
+        else {
           const reservation = allReservations.find(r => r.num === i);
           if (reservation && isPendingActive(reservation.time)) {
             btn.classList.add('pending');
