@@ -77,11 +77,11 @@
       <h1>Rifa de Relógio Mandala Feito à Mão</h1>
       <img src="relogio mandala.jpeg" alt="Foto do Prêmio" class="prize-img" />
       <p class="info-box">
-        Esta rifa foi criada com o intuito de arrecadar recursos que serão destinados às <br><strong>obras e melhorias internas do nosso terreiro</strong>. 🙏✨<br><br>
+        Esta rifa foi criada com o intuito de arrecadar recursos destinados às <br><strong>obras e melhorias internas do nosso terreiro</strong> 🙏✨<br><br>
         Escolha os seus números abaixo (<strong>R$ 5,00 por número</strong>) e clique no botão para registrar a sua reserva!<br>
         <strong style="color: #ffc107;"><br>⚠️ ATENÇÃO<br>As reservas ficam mantidas por 1 hora aguardando o envio do comprovante Pix. Caso o pagamento não seja confirmado nesse prazo, o número voltará a ficar disponível.</strong>
       </p>
-      <div class="date-badge">📅 Sorteio: 13/11/2026</div>
+      <div class="date-badge">Sorteio: 13/11/2026</div>
     </header>
 
     <div class="legend">
@@ -94,7 +94,7 @@
     <div class="grid" id="grid"></div>
 
     <div class="form-box">
-      <h3 style="margin-bottom: 15px; color: var(--primary);">📋 Seus Dados para o Comprovante</h3>
+      <h3 style="margin-bottom: 15px; color: var(--primary);">Seus dados para o comprovante</h3>
       <div class="form-group">
         <label>Nome Completo:</label>
         <input type="text" id="nome" placeholder="Digite seu nome completo" required />
@@ -106,7 +106,7 @@
       
       <p style="margin-top: 10px; font-size: 0.9rem;">Números Escolhidos: <strong id="selected-list" style="color: var(--primary);">Nenhum</strong></p>
       
-      <button class="buy-btn" id="buy-btn" disabled onclick="processarReserva()">Confirmar e Gerar Comprovante 🧾</button>
+      <button class="buy-btn" id="buy-btn" disabled onclick="processarReserva()">Confirmar</button>
     </div>
   </div>
 
@@ -136,7 +136,7 @@
       </p>
   
       <div style="margin: 15px 0; text-align: center;">
-        <small style="color: var(--text-muted); display: block; margin-bottom: 5px;">Chave Pix (Copiar e Cola):</small>
+        <small style="color: var(--text-muted); display: block; margin-bottom: 5px;">Chave Pix (Copia e Cola):</small>
         <div style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #000; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--primary);">
           <span id="chave-pix-texto" style="font-weight: bold; color: var(--primary); font-family: monospace; font-size: 1rem;">45.824.013/0001-13</span>
           <button onclick="copiarChavePix()" title="Copiar Chave Pix" style="background: transparent; border: none; color: var(--primary); cursor: pointer; display: flex; align-items: center; padding: 2px;">
@@ -238,7 +238,7 @@
     }
 
     function resetBuyButton() {
-      buyBtn.textContent = 'Confirmar e Gerar Comprovante 🧾';
+      buyBtn.textContent = 'Confirmar';
       buyBtn.disabled = selectedNumbers.length === 0;
     }
 
