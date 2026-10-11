@@ -156,8 +156,6 @@
     const TOTAL_NUMBERS = 500;
     const PHONE_NUMBER = "5531997163796"; // WhatsApp TULO com DDD
     const PRICE_PER_NUM = 5.00;
-    // Tempo de reserva em horas. Deve ser igual a HORAS_RESERVA no apps-script.gs
-    // e ao prazo informado nos textos da página ("24 horas").
     const HOLD_HOURS = 24;
 
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzRzlKDmI06mhP_sqvTHQJ3u7kzONz3BZUqydwQtMOKH1GPgVuGPq93eJNm6Z-I6SovqA/exec";
@@ -166,15 +164,10 @@
     const OCCUPIED_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 13, 14, 15, 17, 18, 19, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 53, 58, 67, 74, 76, 78, 80, 82, 84, 86, 88, 95, 105, 107, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500];
 
     // 2. RESERVAS MANUAIS COM HORÁRIO (Ficam cinza por HOLD_HOURS horas)
-    // Formato: { num: NÚMERO, time: "AAAA-MM-DDTHH:MM:SS" }
-    // Exemplo: { num: 5, time: "2026-10-09T10:00:00" }
-    const RESERVED_NUMBERS = [
-      // { num: 5, time: "2026-10-09T08:00:00" }
-    ];
+    const RESERVED_NUMBERS = [];
 
     // 3. NÚMEROS CANCELADOS MANUALMENTE (Ignora a reserva pendente e força ficar disponível)
-    // Para cancelar uma reserva feita pelo site, escreva "Cancelado" na coluna Status da planilha.
-    const CANCELED_NUMBERS = []; // Coloque aqui os números que deseja liberar imediatamente
+    const CANCELED_NUMBERS = [];
 
     const REFRESH_SECONDS = 30; // Intervalo da atualização automática da grade
 
@@ -186,31 +179,6 @@
     const grid = document.getElementById('grid');
     const selectedList = document.getElementById('selected-list');
     const buyBtn = document.getElementById('buy-btn');
-
-    const LOCAL_RESERVATIONS_KEY = 'tulo_local_reservations';
-
-    function getLocalReservations() {
-      try {
-        const stored = localStorage.getItem(LOCAL_RESERVATIONS_KEY);
-        return stored ? JSON.parse(stored) : [];
-      } catch (e) {
-        return [];
-      }
-    }
-
-    function saveLocalReservation(numbers) {
-      // Descarta reservas locais já expiradas para o armazenamento não crescer sem limite
-      const current = getLocalReservations().filter(r => isPendingActive(r.time));
-      const now = new Date().toISOString();
-      numbers.forEach(n => {
-        current.push({ num: n, time: now });
-      });
-      try {
-        localStorage.setItem(LOCAL_RESERVATIONS_KEY, JSON.stringify(current));
-      } catch (e) {
-        // Sem localStorage (ex.: navegação privada): as reservas da planilha continuam valendo
-      }
-    }
 
     // Busca na planilha as reservas pendentes e os números pagos
     function carregarReservas() {
@@ -228,7 +196,7 @@
           console.warn('Não foi possível carregar as reservas da planilha:', err);
         })
         .then(() => {
-          if (enviando) return; // Os dados ficam guardados e aparecem na próxima atualização
+          if (enviando) return;
           renderGrid();
           updateFooter();
         });
@@ -249,10 +217,8 @@
     function renderGrid() {
       grid.innerHTML = '';
 
-      // Junta reservas manuais do código + reservas da planilha + reservas locais deste navegador
-      const localReservations = getLocalReservations();
-      const allReservations = [...RESERVED_NUMBERS, ...serverReservations, ...localReservations];
-      // Set ignora números repetidos entre o código e a planilha
+      // Considera apenas reservas manuais do código + reservas vindas da planilha
+      const allReservations = [...RESERVED_NUMBERS, ...serverReservations];
       const occupied = new Set([...OCCUPIED_NUMBERS, ...serverPaid]);
       const available = [];
 
@@ -326,8 +292,6 @@
         return;
       }
 
-      // Fica true até o comprovante ser fechado, para a atualização automática
-      // não mexer na seleção enquanto ela ainda é usada no comprovante e no WhatsApp
       enviando = true;
       buyBtn.disabled = true;
       buyBtn.textContent = 'Gravando reserva...';
@@ -341,8 +305,6 @@
         numeros: selectedNumbers
       };
 
-      // "text/plain" evita a checagem prévia de CORS, que o Apps Script não suporta,
-      // e ainda permite ler a resposta para saber se a reserva foi realmente gravada.
       fetch(SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -358,9 +320,6 @@
           }
           throw new Error(res.erro || 'Resposta inválida da planilha');
         }
-
-        // Reserva confirmada pela planilha: trava os números também neste navegador
-        saveLocalReservation(selectedNumbers);
 
         document.getElementById('comp-nome').textContent = nome;
         document.getElementById('comp-telefone').textContent = telefone;
@@ -417,11 +376,10 @@
       window.open(url, '_blank');
     }
 
-    // Mostra a grade na hora com os dados locais e atualiza com as reservas da planilha
-    renderGrid();
+    // Carrega e exibe a grade sincronizada com a planilha
     carregarReservas();
 
-    // Atualização automática: só roda com a aba visível e sem reserva em andamento
+    // Atualização automática: roda com a aba visível e sem reserva em andamento
     setInterval(() => {
       if (!enviando && !document.hidden) carregarReservas();
     }, REFRESH_SECONDS * 1000);
