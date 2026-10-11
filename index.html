@@ -113,9 +113,7 @@
   <div class="modal" id="modal-comprovante">
     <div class="modal-content" style="position: relative;">
         
-      <h2 style="color: var(--primary);">⏳ Reserva Pendente Registrada!</h2>
-      <p style="font-size: 0.9rem; margin-top: 5px;">Tire um print desta tela como seu comprovante de reserva temporária.</p>
-      
+      <h2 style="color: var(--primary);">⏳ Reserva Pendente Registrada!</h2>      
       <div class="ticket">
         <p><strong>Participante:</strong> <span id="comp-nome"></span></p>
         <p><strong>Telefone:</strong> <span id="comp-telefone"></span></p>
@@ -126,8 +124,7 @@
   
       <div style="background: rgba(255, 193, 7, 0.15); border: 1px solid #ffc107; padding: 12px; border-radius: 8px; margin: 15px 0; text-align: center;">
         <p style="font-size: 0.88rem; color: #ffc107; font-weight: bold; margin: 0; line-height: 1.4;">
-          ⚠️ Sua reserva está pendente e será mantida por <br>1 HORA.<br>
-          Se o pagamento e envio do comprovante não forem enviados dentro deste prazo, os números voltarão a ficar disponíveis.
+          ⚠️ Sua reserva está <b>pendente</b><br>e será mantida por 1 HORA.<br>
         </p>
       </div>
 
@@ -149,7 +146,7 @@
         <small id="mensagem-copiado" style="display: block; color: var(--primary); font-size: 0.8rem; margin-top: 5px; height: 16px; opacity: 0; transition: opacity 0.3s;"></small>
       </div>
   
-      <button class="buy-btn" onclick="abrirWhatsApp()" style="margin-bottom: 10px;">Enviar Comprovante no WhatsApp 📲</button>
+      <button class="buy-btn" onclick="abrirWhatsApp()" style="margin-bottom: 10px;">Enviar comprovante</button>
       
       <button onclick="fecharModal()" style="width: 100%; background: transparent; border: 1px solid #555; color: #ccc; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold;">Fechar</button>
     </div>
